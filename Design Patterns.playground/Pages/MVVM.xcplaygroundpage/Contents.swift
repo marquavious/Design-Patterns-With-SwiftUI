@@ -3,30 +3,7 @@
 import SwiftUI
 import PlaygroundSupport
 
-struct IPhoneView<Content: View>: View {
-    let content: Content
-    let multiplier: CGFloat
-
-    init(multiplier: CGFloat = 2, @ViewBuilder content: () -> Content) {
-        self.multiplier = multiplier
-        self.content = content()
-    }
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 50)
-                .frame(width: 250 * multiplier, height: 500 * multiplier)
-                .background(Color(red: 64 / 255, green: 64 / 255, blue: 70 / 255))
-            RoundedRectangle(cornerRadius: 15)
-                .fill(Color.white)
-                .frame(width: 220 * multiplier, height: 450 * multiplier)
-                .overlay(alignment: .center) {
-                    content
-                }
-        }
-    }
-
-}
+// MARK: - MODEL
 
 struct ToDoObject: Identifiable, Hashable {
     let id = UUID().uuidString
@@ -41,6 +18,8 @@ struct ToDoObject: Identifiable, Hashable {
         case finished, unfinished
     }
 }
+
+// MARK: - VIEW
 
 struct ToDoDetailsView: View {
 
@@ -82,12 +61,15 @@ struct ToDoDetailsView: View {
     }
 
     private func addTodoObject(toDoTitle: String) {
+        if toDoTitle.isEmpty { return }
         let toDoObject = ToDoObject(title: toDoTitle, status: .unfinished)
         toDoDetailsViewModel.addTodo(todo: toDoObject)
         newTodoTitle = ""
         textFieldInFocus = true
     }
 }
+
+// MARK: - VIEW MODEL
 
 class ToDoDetailsViewModel: ObservableObject {
     @Published var todos: [ToDoObject]
@@ -105,14 +87,18 @@ class ToDoDetailsViewModel: ObservableObject {
     }
 }
 
-let fakeToDoDetailsViewModel = ToDoDetailsViewModel(
-    todos: [
-        ToDoObject(title: "Give Dog A Bath", status: .finished),
-        ToDoObject(title: "Make playground for concurrency", status: .unfinished),
-        ToDoObject(title: "Make project to demonstrate SwiftUI", status: .unfinished)
-    ]
+let toDoDetailsView = ToDoDetailsView().environmentObject(
+    ToDoDetailsViewModel(
+        todos: [
+            ToDoObject(title: "Give Dog A Bath", status: .finished),
+            ToDoObject(title: "Make playground for concurrency", status: .unfinished),
+            ToDoObject(title: "Make project to demonstrate SwiftUI", status: .unfinished)
+        ]
+    )
 )
 
-PlaygroundPage.current.setLiveView(ToDoDetailsView().environmentObject(fakeToDoDetailsViewModel))
+if shouldAllowPlaygroundRendering() {
+    PlaygroundPage.current.setLiveView(toDoDetailsView)
+}
 
 //: [Next](@next)
