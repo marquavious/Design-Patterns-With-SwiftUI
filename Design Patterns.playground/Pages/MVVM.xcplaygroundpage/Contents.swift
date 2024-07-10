@@ -3,55 +3,38 @@
 import SwiftUI
 import PlaygroundSupport
 
-struct ToDoDetailsView: View {
+struct IPhoneView<Content: View>: View {
+    let content: Content
+    let multiplier: CGFloat
 
-    @EnvironmentObject var toDoDetailsViewModel: ToDoDetailsViewModel
-    @State var toDoTitle = ""
-    @State var toDoDescription = ""
+    init(multiplier: CGFloat = 2, @ViewBuilder content: () -> Content) {
+        self.multiplier = multiplier
+        self.content = content()
+    }
 
     var body: some View {
-        ZStack {}
-            .frame(width: 300, height: 500)
-            .overlay(alignment: .topLeading) {
-                VStack(alignment: .leading) {
-                    Text(toDoDetailsViewModel.toDo.title)
-                    Text(toDoDetailsViewModel.toDo.description)
-
-                    TextField("Title", text: $toDoTitle)
-                    TextField("Description", text: $toDoDescription)
-
-                    Button("Update Todo") {
-                        updateTodo()
-                    }
+        ZStack {
+            RoundedRectangle(cornerRadius: 50)
+                .frame(width: 250 * multiplier, height: 500 * multiplier)
+                .background(Color(red: 64 / 255, green: 64 / 255, blue: 70 / 255))
+            RoundedRectangle(cornerRadius: 15)
+                .fill(Color.white)
+                .frame(width: 220 * multiplier, height: 450 * multiplier)
+                .overlay(alignment: .center) {
+                    content
                 }
-            }.onAppear {
-                setUpTodo()
-            }
+        }
     }
 
-    private func updateTodo() {
-        toDoDetailsViewModel.updateTodoTitle(title: toDoTitle)
-        toDoDetailsViewModel.updateDescription(description: toDoDescription)
-    }
-
-    private func setUpTodo() {
-        toDoTitle = toDoDetailsViewModel.toDo.title
-        toDoDescription = toDoDetailsViewModel.toDo.description
-    }
 }
 
-struct Todo: Identifiable, Hashable {
+struct ToDoObject: Identifiable, Hashable {
     let id = UUID().uuidString
     var title: String
-    var description: String
     var status: Status
 
-    mutating func updateTitle(title: String) {
-        self.title = title
-    }
-
-    mutating func updateDescription(description: String) {
-        self.description = description
+    mutating func updateStatus(status: Status) {
+        self.status = status
     }
 
     enum Status {
@@ -59,26 +42,77 @@ struct Todo: Identifiable, Hashable {
     }
 }
 
+struct ToDoDetailsView: View {
+
+    @EnvironmentObject var toDoDetailsViewModel: ToDoDetailsViewModel
+    @FocusState private var textFieldInFocus: Bool
+    @State var newTodoTitle = ""
+
+    var body: some View {
+        IPhoneView {
+            VStack {
+                List {
+                    ForEach(toDoDetailsViewModel.todos) { todo in
+                        VStack(alignment: .leading) {
+                            Text(todo.title)
+                        }
+                    }
+                    .onDelete { indexSet in
+                        toDoDetailsViewModel.deleteTodo(indexSet: indexSet)
+                    }
+                }
+
+                VStack(spacing: 16) {
+                    TextField("New todo...", text: $newTodoTitle)
+                        .onSubmit {
+                            addTodoObject(toDoTitle: newTodoTitle)
+                        }
+                        .focused($textFieldInFocus)
+                    Color.gray
+                        .opacity(0.5)
+                        .frame(minWidth: 1, maxHeight: 1)
+                    Button("Add Todo") {
+                        addTodoObject(toDoTitle: newTodoTitle)
+                    }
+                    .disabled(newTodoTitle.isEmpty)
+                }
+                .padding(20)
+            }
+        }
+    }
+
+    private func addTodoObject(toDoTitle: String) {
+        let toDoObject = ToDoObject(title: toDoTitle, status: .unfinished)
+        toDoDetailsViewModel.addTodo(todo: toDoObject)
+        newTodoTitle = ""
+        textFieldInFocus = true
+    }
+}
+
 class ToDoDetailsViewModel: ObservableObject {
-    @Published var toDo: Todo
+    @Published var todos: [ToDoObject]
 
-    init(toDo: Todo) {
-        self.toDo = toDo
+    init(todos: [ToDoObject]) {
+        self.todos = todos
     }
 
-    func updateTodoTitle(title: String) {
-        toDo.updateTitle(title: title)
+    func addTodo(todo: ToDoObject) {
+        todos.append(todo)
     }
 
-    func updateDescription(description: String) {
-        toDo.updateDescription(description: description)
+    func deleteTodo(indexSet: IndexSet) {
+        todos.remove(atOffsets: indexSet)
     }
 }
 
-func setUpPageViewObject() -> ToDoDetailsViewModel {
-    ToDoDetailsViewModel(toDo: Todo(title: "Give Dog A Bath", description: "Fido needs his bath, it's been 6 months...", status: .unfinished))
-}
+let fakeToDoDetailsViewModel = ToDoDetailsViewModel(
+    todos: [
+        ToDoObject(title: "Give Dog A Bath", status: .finished),
+        ToDoObject(title: "Make playground for concurrency", status: .unfinished),
+        ToDoObject(title: "Make project to demonstrate SwiftUI", status: .unfinished)
+    ]
+)
 
-PlaygroundPage.current.setLiveView(ToDoDetailsView().environmentObject(setUpPageViewObject()))
+PlaygroundPage.current.setLiveView(ToDoDetailsView().environmentObject(fakeToDoDetailsViewModel))
 
 //: [Next](@next)
