@@ -4,5 +4,7 @@
         <page name='Introduction'/>
         <page name='MVVM'/>
         <page name='Singleton'/>
+        <page name='Singleton +'/>
+        <page name='Strategy'/>
     </pages>
 </playground>
