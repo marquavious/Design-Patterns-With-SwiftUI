@@ -16,7 +16,7 @@ class ForwardSort: SortStrategy {
 
 class BackwardSort: SortStrategy {
     func sort(_ data: [Int]) -> [Int] {
-        data.reversed()
+        data.sorted().reversed()
     }
 }
 
@@ -57,7 +57,7 @@ enum SortingStrategy: Int, CaseIterable, Equatable, Hashable {
 
 struct ContentView: View {
 
-    @State var numbers = [Int]()
+    @State var numbers = [1, 2, 3, 4, 5, 6]
     @State var newNumberText = String()
     @FocusState private var textFieldInFocus: Bool
     @State private var selectedSortingStrategy: SortingStrategy = .forwardSort
@@ -75,7 +75,8 @@ struct ContentView: View {
                                 .padding(.vertical, 50)
                                 .background(.red, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
-                    }.padding(10)
+                    }
+                    .padding(10)
                 }
 
                 Spacer()
